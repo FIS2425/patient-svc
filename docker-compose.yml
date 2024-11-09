@@ -20,9 +20,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: template
+    container_name: patient
     environment:
       - MONGODB_URL=${MONGOURL}
+      - PORT = 3006
     depends_on:
       - mongodb
     networks:
@@ -30,7 +31,7 @@ services:
     ports:
       - "3001:3001"
     volumes:
-      - .:/template
+      - .:/patient
 
 volumes:
   mongo-data:
