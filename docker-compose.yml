@@ -15,7 +15,7 @@ services:
     volumes:
       - mongo-data:/data/db
 
-  template:
+  patient:
     restart: unless-stopped
     build:
       context: .
@@ -31,7 +31,7 @@ services:
     ports:
       - "3001:3001"
     volumes:
-      - .:/patient
+      - .:/patient-svc
 
 volumes:
   mongo-data:
