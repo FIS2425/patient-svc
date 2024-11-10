@@ -1,13 +1,13 @@
 import mongoose from 'mongoose';
-import { validate as uuidValidate, v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4, validate as uuidValidate } from 'uuid';
 
 const patientSchema = new mongoose.Schema({
   _id: {
     type: String,
     default: () => uuidv4(),
     validate: {
-      validator: uuidValidate,
-      message: (props) => `${props.value} is not a vaid UUID`,
+      validator: (v) => uuidValidate(v),
+      message: (props) => `${props.value} is not a valid UUID`,
     },
   },
   name: {
