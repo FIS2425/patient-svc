@@ -5,7 +5,7 @@ import logger from '../config/logger.js';
 
 export const register = async (req, res) => {
   try {
-    const { name, surname,birthdate, dni, city, clinicHistoryId, username, password, email} = req.body;
+    const { name, surname, birthdate, dni, city, clinicHistoryId, username, password, email } = req.body;
     try {
 
       const patient = new Patient({
@@ -13,10 +13,10 @@ export const register = async (req, res) => {
         surname,
         birthdate,
         dni,
-        city, 
-        clinicHistoryId, 
-        username, 
-        password, 
+        city,
+        clinicHistoryId,
+        username,
+        password,
         email,
         // userId: authResponse.data._id
         userId: '18e373c7-092a-1720-a381-fd909g52153'
@@ -41,6 +41,19 @@ export const register = async (req, res) => {
   }
 }
 
+export const obtainAll = async (req, res) => {
+  try {
+    const patients = await Patient.find(); // Encuentra todos los pacientes
+    res.status(200).json(patients);
+  } catch (error) {
+    logger.error('Error fetching patients', {
+      method: req.method,
+      url: req.originalUrl,
+      error: error
+    });
+    res.status(500).json({ message: error.message });
+  }
+}
 
 export const deletePatient = async (req, res) => {
 
@@ -56,7 +69,7 @@ export const deletePatient = async (req, res) => {
     } else {
       try {
         await patient.deleteOne();
-        logger.info(Patient ${patient._id} deleted from database);
+        logger.info(`Patient ${patient._id} deleted from database`);
         res.status(204).json({ message: 'Patient deleted' });
       } catch (error) {
         logger.error('Error deleting user', {
