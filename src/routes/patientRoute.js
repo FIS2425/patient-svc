@@ -1,6 +1,7 @@
 import express from 'express';
 import { register,obtainAll,deletePatient} from '../controllers/patientController.js';
 
+
 const router = express.Router();
 
 router.post('/register', register);
