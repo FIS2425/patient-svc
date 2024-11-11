@@ -5,16 +5,16 @@ import logger from '../config/logger.js';
 
 export const register = async (req, res) => {
   try {
-    const { name, surname,birthdate, dni, city, clinicHistory, username, password, email} = req.body;
+    const { name, surname,birthdate, dni, city, clinicHistoryId, username, password, email} = req.body;
     try {
 
-      const Patient = new Patient({
+      const patient = new Patient({
         name,
         surname,
         birthdate,
         dni,
         city, 
-        clinicHistory, 
+        clinicHistoryId, 
         username, 
         password, 
         email,
@@ -22,9 +22,9 @@ export const register = async (req, res) => {
         userId: '18e373c7-092a-1720-a381-fd909g52153'
       });
 
-      await Patient.save();
-      logger.info(`Patient ${Patient._id} created`);
-      res.status(201).json(Patient);
+      await patient.save();
+      logger.info(`Patient ${patient._id} created`);
+      res.status(201).json(patient);
 
     } catch (error) {
       logger.error('Invalid credentials', {
