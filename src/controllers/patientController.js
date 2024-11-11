@@ -40,3 +40,33 @@ export const register = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 }
+
+
+export const deletePatient = async (req, res) => {
+
+  try {
+    const { id } = req.params;
+    const patient = await Patient.findById(id);
+    if (!patient) {
+      logger.error('Patient not found', {
+        method: req.method,
+        url: req.originalUrl
+      });
+      res.status(404).json({ message: 'Patient not found' });
+    } else {
+      try {
+        await patient.deleteOne();
+        logger.info(Patient ${patient._id} deleted from database);
+        res.status(204).json({ message: 'Patient deleted' });
+      } catch (error) {
+        logger.error('Error deleting user', {
+          method: req.method,
+          url: req.originalUrl,
+          error: error
+        });
+      }
+    }
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
