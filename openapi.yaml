@@ -1,14 +1,265 @@
 openapi: 3.0.0
 info:
-  title: Microservicio Template
+  title: Patient Microservice
   version: 1.0.0
-  description: Template para microservicios
-
+  description: Patient microservice for managing patient data within the Clinic Management System. Supports registration, retrieval, updating, and deletion of patient information.
 servers:
   - url: http://localhost:3001
+    description: Local development server for the Patient microservice
 
 paths:
-  # Aquí irán tus rutas
+  /register:
+    post:
+      summary: Register a new patient
+      description: Creates and saves a new patient in the database, assigning them a unique medical history ID.
+      requestBody:
+        required: true
+        description: Complete information about the patient to be registered.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Patient's first name
+                surname:
+                  type: string
+                  description: Patient's last name
+                birthdate:
+                  type: string
+                  format: date
+                  description: Patient's date of birth in YYYY-MM-DD format
+                dni:
+                  type: string
+                  description: National identification number of the patient
+                city:
+                  type: string
+                  description: City of residence of the patient
+                clinicHistoryId:
+                  type: string
+                  description: Unique ID of the patient’s medical history
+                username:
+                  type: string
+                  description: Username for the patient's access to the system
+                password:
+                  type: string
+                  description: Password for the patient's access to the system
+                email:
+                  type: string
+                  description: Patient's email for communication and account recovery
+      responses:
+        '201':
+          description: Patient successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+        '400':
+          description: Invalid request - may lack required data or have incorrect format
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Details about the error in the request
+
+  /obtainAll:
+    get:
+      summary: Get all patients
+      description: Retrieves a complete list of all patients registered in the system.
+      responses:
+        '200':
+          description: Patient list successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Patient'
+        '500':
+          description: Internal error when retrieving patient list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message with additional details
+
+  /deletePatient/{id}:
+    delete:
+      summary: Delete a patient
+      description: Deletes a patient from the system using their unique ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: Unique ID of the patient to be deleted
+      responses:
+        '204':
+          description: Patient successfully deleted, no content returned
+        '404':
+          description: Patient not found - the provided ID does not match any patient
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Details about the error in finding the patient
+        '400':
+          description: Invalid request - possible incorrect ID format
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message related to the request
+
+  /updatePatient/{id}:
+    put:
+      summary: Update patient data
+      description: Updates the information of an existing patient using their unique ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: Unique ID of the patient to update
+      requestBody:
+        required: true
+        description: Updated information about the patient to be modified.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: New name of the patient
+                surname:
+                  type: string
+                  description: New surname of the patient
+                birthdate:
+                  type: string
+                  format: date
+                  description: New date of birth in YYYY-MM-DD format
+                dni:
+                  type: string
+                  description: Updated identification number of the patient
+                city:
+                  type: string
+                  description: New city of residence of the patient
+      responses:
+        '200':
+          description: Patient successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+        '400':
+          description: Error updating patient - possible invalid data format or missing fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Details about the update error
+        '404':
+          description: Patient not found - the provided ID does not match any patient
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Details about the error in finding the patient
+
+  /getPatientById/{id}:
+    get:
+      summary: Retrieve a patient by ID
+      description: Fetches detailed information of a specific patient by their unique ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: Unique ID of the patient to retrieve
+      responses:
+        '200':
+          description: Patient successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+        '404':
+          description: Patient not found - the provided ID does not match any patient
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message indicating patient not found
+        '500':
+          description: Error retrieving patient - server error or issue with the database
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Error message providing details about the server error
 
 components:
-  # Aquí irán tus componentes reutilizables
+  schemas:
+    Patient:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Unique ID of the patient
+        name:
+          type: string
+          description: Patient's first name
+        surname:
+          type: string
+          description: Patient's last name
+        birthdate:
+          type: string
+          format: date
+          description: Patient's date of birth in YYYY-MM-DD format
+        dni:
+          type: string
+          description: Patient's national identification number
+        city:
+          type: string
+          description: City of residence of the patient
+        clinicHistoryId:
+          type: string
+          description: Unique ID of the patient’s medical history
+        username:
+          type: string
+          description: Username for the patient's access to the system
+        password:
+          type: string
+          description: Password for the patient's access to the system
+        email:
+          type: string
+          description: Patient's email for communication and account recovery
