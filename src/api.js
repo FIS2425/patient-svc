@@ -15,13 +15,12 @@ export default function () {
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
 
-  app.use('/',router);
-
   app.get('/', (req, res) => {
     res.send('API funcionando correctamente');
   });
 
   app.use('/docs', swaggerUI.serve, swaggerUI.setup(swaggerDocument));
-  
+  app.use('/', router);
+
   return app;
 }
