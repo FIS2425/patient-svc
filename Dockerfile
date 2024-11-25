@@ -1,11 +1,13 @@
 FROM node:lts-alpine
 
-# TODO: Cambiar el nombre de la carpeta por el nombre de tu proyecto
 WORKDIR /patient-svc
+
+COPY package.json package-lock.json ./
+
+RUN npm ci --omit=dev && \
+    rm -rf $(npm get cache)
 
 COPY . .
 
-RUN npm ci --production && \
-    rm -rf $(npm get cache)
 
 ENTRYPOINT ["npm", "start"]

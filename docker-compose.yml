@@ -4,7 +4,7 @@ services:
   mongodb:
     restart: unless-stopped
     image: mongo:latest
-    container_name: mongodb
+    container_name: mongodb-patient
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGOADMIN}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGOPASS}
@@ -30,8 +30,6 @@ services:
       - backend
     ports:
       - "3001:3001"
-    volumes:
-      - .:/patient-svc
 
 volumes:
   mongo-data:
