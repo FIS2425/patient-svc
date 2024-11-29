@@ -2,77 +2,64 @@ openapi: 3.0.0
 info:
   title: Patient Microservice
   version: 1.0.0
-  description: Patient microservice for managing patient data within the Clinic Management System. Supports registration, retrieval, updating, and deletion of patient information.
+  description: >
+    Patient microservice for managing patient data within the Clinic Management System.
+    Supports registration, retrieval, updating, and deletion of patient information.
 servers:
-  - url: http://localhost:3001
-    description: Local development server for the Patient microservice
+  - url: /api/v1
+
+security:
+  - cookieAuth: []
+
+tags:
+  - name: Patients
+    description: Operations related to patient management.
 
 paths:
-  /register:
+  /patients/:
     post:
+      tags:
+        - Patients
       summary: Register a new patient
-      description: Creates and saves a new patient in the database, assigning them a unique medical history ID.
+      description: Creates a new patient record in the system.
+      security:
+        - cookieAuth: []
       requestBody:
         required: true
-        description: Complete information about the patient to be registered.
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: Patient's first name
-                surname:
-                  type: string
-                  description: Patient's last name
-                birthdate:
-                  type: string
-                  format: date
-                  description: Patient's date of birth in YYYY-MM-DD format
-                dni:
-                  type: string
-                  description: National identification number of the patient
-                city:
-                  type: string
-                  description: City of residence of the patient
-                clinicHistoryId:
-                  type: string
-                  description: Unique ID of the patient’s medical history
-                username:
-                  type: string
-                  description: Username for the patient's access to the system
-                password:
-                  type: string
-                  description: Password for the patient's access to the system
-                email:
-                  type: string
-                  description: Patient's email for communication and account recovery
+              $ref: '#/components/schemas/Patient'
       responses:
         '201':
-          description: Patient successfully created
+          description: Patient created successfully.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Patient'
         '400':
-          description: Invalid request - may lack required data or have incorrect format
+          description: Missing fields in the request body.
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: Details about the error in the request
+              example:
+                message: "Missing fields"
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              example:
+                message: "An unexpected error occurred"
 
-  /obtainAll:
     get:
-      summary: Get all patients
-      description: Retrieves a complete list of all patients registered in the system.
+      tags:
+        - Patients
+      summary: Retrieve all patients
+      description: Fetch a list of all patients.
+      security:
+        - cookieAuth: []
       responses:
         '200':
-          description: Patient list successfully retrieved
+          description: List of patients retrieved successfully.
           content:
             application/json:
               schema:
@@ -80,186 +67,160 @@ paths:
                 items:
                   $ref: '#/components/schemas/Patient'
         '500':
-          description: Internal error when retrieving patient list
+          description: Internal server error.
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: Error message with additional details
+              example:
+                message: "An unexpected error occurred"
 
-  /deletePatient/{id}:
-    delete:
-      summary: Delete a patient
-      description: Deletes a patient from the system using their unique ID.
+  /patients/{id}:
+    get:
+      tags:
+        - Patients
+      summary: Get patient by ID
+      description: Fetch a specific patient using their unique ID.
+      security:
+        - cookieAuth: []
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: string
-            description: Unique ID of the patient to be deleted
       responses:
-        '204':
-          description: Patient successfully deleted, no content returned
+        '200':
+          description: Patient retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
         '404':
-          description: Patient not found - the provided ID does not match any patient
+          description: Patient not found.
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: Details about the error in finding the patient
-        '400':
-          description: Invalid request - possible incorrect ID format
+              example:
+                message: "Patient not found"
+        '500':
+          description: Internal server error.
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: Error message related to the request
+              example:
+                message: "An unexpected error occurred"
 
-  /updatePatient/{id}:
     put:
-      summary: Update patient data
-      description: Updates the information of an existing patient using their unique ID.
+      tags:
+        - Patients
+      summary: Update a patient by ID
+      description: Modify the details of a specific patient.
+      security:
+        - cookieAuth: []
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: string
-            description: Unique ID of the patient to update
       requestBody:
         required: true
-        description: Updated information about the patient to be modified.
         content:
           application/json:
             schema:
               type: object
-              properties:
-                name:
-                  type: string
-                  description: New name of the patient
-                surname:
-                  type: string
-                  description: New surname of the patient
-                birthdate:
-                  type: string
-                  format: date
-                  description: New date of birth in YYYY-MM-DD format
-                dni:
-                  type: string
-                  description: Updated identification number of the patient
-                city:
-                  type: string
-                  description: New city of residence of the patient
+              additionalProperties: true
       responses:
         '200':
-          description: Patient successfully updated
+          description: Patient updated successfully.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Patient'
-        '400':
-          description: Error updating patient - possible invalid data format or missing fields
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: Details about the update error
         '404':
-          description: Patient not found - the provided ID does not match any patient
+          description: Patient not found.
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: Details about the error in finding the patient
+              example:
+                message: "Patient not found"
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              example:
+                message: "An unexpected error occurred"
 
-  /getPatientById/{id}:
-    get:
-      summary: Retrieve a patient by ID
-      description: Fetches detailed information of a specific patient by their unique ID.
+    delete:
+      tags:
+        - Patients
+      summary: Delete a patient by ID
+      description: Remove a specific patient from the system.
+      security:
+        - cookieAuth: []
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: string
-            description: Unique ID of the patient to retrieve
       responses:
         '200':
-          description: Patient successfully retrieved
+          description: Patient deleted successfully.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Patient'
         '404':
-          description: Patient not found - the provided ID does not match any patient
+          description: Patient not found.
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: Error message indicating patient not found
+              example:
+                message: "Patient not found"
         '500':
-          description: Error retrieving patient - server error or issue with the database
+          description: Internal server error.
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: Error message providing details about the server error
+              example:
+                message: "An unexpected error occurred"
 
 components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
   schemas:
     Patient:
       type: object
       properties:
-        _id:
+        id:
           type: string
-          description: Unique ID of the patient
+          description: Unique identifier of the patient.
         name:
           type: string
-          description: Patient's first name
         surname:
           type: string
-          description: Patient's last name
         birthdate:
           type: string
           format: date
-          description: Patient's date of birth in YYYY-MM-DD format
         dni:
           type: string
-          description: Patient's national identification number
         city:
           type: string
-          description: City of residence of the patient
         clinicHistoryId:
           type: string
-          description: Unique ID of the patient’s medical history
         username:
           type: string
-          description: Username for the patient's access to the system
-        password:
-          type: string
-          description: Password for the patient's access to the system
         email:
           type: string
-          description: Patient's email for communication and account recovery
+      required:
+        - name
+        - surname
+        - birthdate
+        - dni
+        - city
+        - clinicHistoryId
+        - username
+        - email
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string

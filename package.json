@@ -11,7 +11,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "start": "node --env-file=.env ./src/config/index.js",
+    "start": "node ./src/config/index.js",
     "lint": "eslint . --max-warnings=0 --cache --cache-location node_modules/.cache/eslint",
     "lint-fix": "eslint . --fix --max-warnings=0 --cache --cache-location node_modules/.cache/eslint",
     "dev": "node --watch --env-file=.env ./src/config/index.js",
@@ -50,6 +50,8 @@
     "cookie-parser": "1.4.7",
     "cors": "2.8.5",
     "express": "4.21.1",
+    "jsonwebtoken": "9.0.2",
+    "kafkajs": "2.2.4",
     "mongoose": "8.8.3",
     "swagger-ui-express": "5.0.1",
     "uuid": "11.0.3",

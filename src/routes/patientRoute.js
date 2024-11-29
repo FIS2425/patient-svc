@@ -3,10 +3,10 @@ import {register,obtainAll,deletePatient, updatePatient,getPatientById} from '..
 
 const router = express.Router();
 
-router.post('/register', register);
-router.get('/obtainAll', obtainAll);
-router.delete('/deletePatient/:id', deletePatient);
-router.put('/updatePatient/:id', updatePatient);
-router.get('/getPatientById/:id', getPatientById);
+router.post('/', register);
+router.get('/', obtainAll);
+router.delete('/:id', deletePatient);
+router.put('/:id', updatePatient);
+router.get('/:id', getPatientById);
 
 export default router;
