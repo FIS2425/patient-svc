@@ -11,7 +11,7 @@ services:
     networks:
       - backend
     ports:
-      - "27017:27017"
+      - "27019:27017"
     volumes:
       - mongo-data:/data/db
 
@@ -23,13 +23,13 @@ services:
     container_name: patient
     environment:
       - MONGODB_URL=${MONGOURL}
-      - PORT = 3006
+      - PORT=3002
     depends_on:
       - mongodb
     networks:
       - backend
     ports:
-      - "3001:3001"
+      - "3002:3002"
 
 volumes:
   mongo-data:

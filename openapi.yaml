@@ -4,7 +4,7 @@ info:
   version: 1.0.0
   description: Patient microservice for managing patient data within the Clinic Management System. Supports registration, retrieval, updating, and deletion of patient information.
 servers:
-  - url: http://localhost:3001
+  - url: http://localhost:3002
     description: Local development server for the Patient microservice
 
 paths:

@@ -50,6 +50,7 @@
     "cookie-parser": "1.4.7",
     "cors": "2.8.5",
     "express": "4.21.1",
+    "jsonwebtoken": "9.0.2",
     "mongoose": "8.8.2",
     "swagger-ui-express": "5.0.1",
     "uuid": "11.0.3",

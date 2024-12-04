@@ -3,16 +3,47 @@ import axios from 'axios';
 
 import logger from '../config/logger.js';
 
+
+
+const crearHistorialClinico = async (pacienteId) => {
+  try {
+    const response = await axios.post('http://localhost:3003/', {
+      pacienteId
+    });
+    console.log('Historial creado:', response.data);
+  } catch (error) {
+    console.error('Error al crear el historial:', error.message);
+  }
+};
+
 export const register = async (req, res) => {
   try {
     const { name, surname, birthdate, dni, city, clinicHistoryId, username, password, email } = req.body;
 
     // Check if any required field is missing
     if (!name || !surname || !birthdate || !dni || !city || !clinicHistoryId || !username || !password || !email) {
-      return res.status(400).json({ message: "All fields are required." });
+      return res.status(400).json({ message: 'All fields are required.' });
+    }
+
+    // Check if a doctor with the same DNI already exists
+    const existingPatient = await Patient.findOne({ dni });
+    if (existingPatient) {
+      return res.status(400).json({ message: 'A patient with the same DNI already exists' });
     }
 
     try {
+
+      const authResponse = await axios.post(`${process.env.AUTH_SVC}/users`, {
+        password,
+        email,
+        roles: ['patient']
+      }, {
+        withCredentials: true,
+        headers: {
+          Cookie: `token=${req.token}`
+        }
+      });
+
       const patient = new Patient({
         name,
         surname,
@@ -23,10 +54,11 @@ export const register = async (req, res) => {
         username,
         password,
         email,
-        userId: '18e373c7-092a-1720-a381-fd909g52153' // Consider dynamically generating or validating this field
+        userId: authResponse.data._id
       });
 
       await patient.save();
+      await crearHistorialClinico(patient._id);
       logger.info(`Patient ${patient._id} created`);
       res.status(201).json(patient);
 
