@@ -9,5 +9,4 @@ RUN npm ci --omit=dev && \
 
 COPY . .
 
-
 ENTRYPOINT ["npm", "start"]
