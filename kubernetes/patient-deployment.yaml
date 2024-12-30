@@ -41,6 +41,16 @@ spec:
                   key: MONGOURL
             - name: NODE_ENV
               value: production
+            - name: AUTH_SVC
+              valueFrom:
+                secretKeyRef:
+                  name: patient-secrets
+                  key: AUTH_SVC
+            - name: HISTORY_SVC
+              valueFrom:
+                secretKeyRef:
+                  name: patient-secrets
+                  key: HISTORY_SVC
           image: ghcr.io/fis2425/patient:latest
           imagePullPolicy: Always
           name: patient-svc

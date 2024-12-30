@@ -25,7 +25,6 @@ const sample = [
     birthdate: '1985-05-15T00:00:00.000Z',
     dni: '12345678Z',
     city: 'Madrid',
-    clinicHistoryId: 'CH12345',
     userId: 'user001'
   }
 ];

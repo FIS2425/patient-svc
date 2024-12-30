@@ -28,6 +28,8 @@ services:
       - API_PREFIX=${API_PREFIX}
       - KAFKA_HOST=${KAFKA_HOST}
       - JWT_SECRET=${JWT_SECRET}
+      - AUTH_SVC=${AUTH_SVC}
+      - HISTORY_SVC=${HISTORY_SVC}
     depends_on:
       - mongodb-patient
     networks:

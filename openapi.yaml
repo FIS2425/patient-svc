@@ -204,8 +204,6 @@ components:
           type: string
         city:
           type: string
-        clinicHistoryId:
-          type: string
         username:
           type: string
         email:
@@ -216,7 +214,6 @@ components:
         - birthdate
         - dni
         - city
-        - clinicHistoryId
         - username
         - email
     ErrorResponse:
