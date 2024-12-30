@@ -1,8 +1,9 @@
-import { beforeAll, afterAll, describe, expect, it } from 'vitest';
+import { beforeAll, afterAll, describe, expect, it,beforeEach } from 'vitest';
 import Patient from '../../../src/schemas/Patient.js';
 import * as db from '../../setup/database';
 import { request } from '../../setup/setup';
 import { v4 as uuidv4 } from 'uuid';
+import jwt from 'jsonwebtoken';
 
 beforeAll(async () => {
   await db.clearDatabase();
@@ -10,6 +11,21 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await db.clearDatabase();
+});
+
+const sampleUser = {
+  _id: uuidv4(),
+  email: 'testuser2@mail.com',
+  password: 'pAssw0rd!',
+  roles: ['patient'],
+};
+
+beforeEach(async () => {
+  const token = jwt.sign(
+    { userId: sampleUser._id, roles: sampleUser.roles },
+    process.env.VITE_JWT_SECRET
+  );
+  request.set('Cookie', `token=${token}`);
 });
 
 describe('PATIENT ENDPOINTS TEST', () => {

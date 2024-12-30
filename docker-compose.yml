@@ -11,7 +11,7 @@ services:
     networks:
       - backend
     ports:
-      - "27017:27017"
+      - "27018:27017"
     volumes:
       - mongo-data:/data/db
 
@@ -24,7 +24,7 @@ services:
     environment:
       - MONGOURL=${MONGOURL}
       - PORT=${PORT}
-      - NODE_ENV=${NODE_ENV}
+      - NODE_ENV=development
       - API_PREFIX=${API_PREFIX}
       - KAFKA_HOST=${KAFKA_HOST}
       - JWT_SECRET=${JWT_SECRET}
