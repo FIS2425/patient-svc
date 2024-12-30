@@ -3,39 +3,57 @@ kind: Deployment
 metadata:
   annotations:
     kompose.cmd: kompose convert -o kubernetes/
-    kompose.version: 1.35.0 (HEAD)
+    kompose.version: 1.34.0 (cbf2835db)
   labels:
-    io.kompose.service: mongodb
-  name: mongodb
+    io.kompose.service: mongodb-patient
+  name: mongodb-patient
 spec:
   replicas: 1
   selector:
     matchLabels:
-      io.kompose.service: mongodb
+      io.kompose.service: mongodb-patient
   strategy:
     type: Recreate
   template:
     metadata:
       annotations:
         kompose.cmd: kompose convert -o kubernetes/
-        kompose.version: 1.35.0 (HEAD)
+        kompose.version: 1.34.0 (cbf2835db)
       labels:
-        io.kompose.service: mongodb
+        io.kompose.service: mongodb-patient
     spec:
       containers:
         - env:
             - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: patient-secrets
+                  key: MONGOPASS
             - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: patient-secrets
+                  key: MONGOADMIN
           image: mongo:latest
-          name: mongodb-auth
+          name: mongodb-patient
+          livenessProbe:
+            exec:
+              command:
+              - mongosh
+              - --eval
+              - 'db.runCommand("ping").ok' 
+              - localhost:27017/test
+              - --quiet
+            initialDelaySeconds: 15
+            periodSeconds: 5
           ports:
             - containerPort: 27017
               protocol: TCP
           volumeMounts:
             - mountPath: /data/db
-              name: mongo-auth
+              name: mongo-patient
       restartPolicy: Always
       volumes:
-        - name: mongo-auth
+        - name: mongo-patient
           persistentVolumeClaim:
-            claimName: mongo-auth
+            claimName: mongo-patient

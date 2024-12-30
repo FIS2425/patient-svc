@@ -13,7 +13,7 @@ services:
     ports:
       - "27018:27017"
     volumes:
-      - mongo-data:/data/db
+      - mongo-patient:/data/db
 
   patient:
     restart: unless-stopped
@@ -36,7 +36,7 @@ services:
       - "3006:3006"
 
 volumes:
-  mongo-data:
+  mongo-patient:
 
 networks:
   backend:

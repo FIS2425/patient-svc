@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   annotations:
     kompose.cmd: kompose convert -o kubernetes/
-    kompose.version: 1.35.0 (HEAD)
+    kompose.version: 1.34.0 (cbf2835db)
   labels:
     io.kompose.service: patient-svc
   name: patient-svc
@@ -24,10 +24,6 @@ spec:
         - env:
             - name: API_PREFIX
               value: /api/v1
-            - name: JWT_EXPIRATION
-              value: "3600"
-            - name: JWT_REFRESH_EXPIRATION
-              value: "604800"
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -38,29 +34,15 @@ spec:
                 secretKeyRef:
                   name: patient-secrets
                   key: KAFKA_HOST
-            - name: MONGOADMIN
-              valueFrom:
-                secretKeyRef:
-                  name: patient-secrets
-                  key: MONGOADMIN
-            - name: MONGOPASS
-              valueFrom:
-                secretKeyRef:
-                  name: patient-secrets
-                  key: MONGOPASS
-            - name: SECURE_COOKIE
-              valueFrom:
-                secretKeyRef:
-                  name: patient-secrets
-                  key: SECURE_COOKIE
             - name: MONGOURL
               valueFrom:
                 secretKeyRef:
                   name: patient-secrets
                   key: MONGOURL
             - name: NODE_ENV
-              value: development
+              value: production
           image: ghcr.io/fis2425/patient:latest
+          imagePullPolicy: Always
           name: patient-svc
           ports:
             - containerPort: 3006
