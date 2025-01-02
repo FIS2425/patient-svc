@@ -1,51 +1,141 @@
 import Patient from '../schemas/Patient.js';
 import logger from '../config/logger.js';
+import axios from 'axios';
 
+const AUTH_SVC = process.env.AUTH_SVC || 'http://localhost:3001/api/v1';  
+const HISTORY_SVC = process.env.HISTORY_SVC || 'http://localhost:3005/api/v1';
 export const register = async (req, res) => {
   try {
-    const { name, surname, birthdate, dni, city, clinicHistoryId, username, password, email } = req.body;
+    // Destructurando los datos del cuerpo de la solicitud
+    const { name, surname, birthdate, dni, city, username, password, email } = req.body;
 
-    if (!name || !surname || !birthdate || !dni || !city || !clinicHistoryId || !username || !password || !email) {
+    // Validación de campos requeridos
+    if (!name || !surname || !birthdate || !dni || !city || !username || !password || !email) {
       logger.error('Missing fields', {
         method: req.method,
         url: req.originalUrl,
-        ip: req.headers && req.headers['x-forwarded-for'] || req.ip,
-        requestId: req.headers && req.headers['x-request-id'] || null,
+        ip: req.headers?.['x-forwarded-for'] || req.ip,
+        requestId: req.headers?.['x-request-id'] || null,
       });
       return res.status(400).json({ message: 'Missing fields' });
     }
+    const availableDNI = await checkAvailableDNI(dni);
+    if(availableDNI){
+      logger.error('DNI already exists', {
+        method: req.method,
+        url: req.originalUrl,
+        ip: req.headers?.['x-forwarded-for'] || req.ip,
+        requestId: req.headers?.['x-request-id'] || null,
+      });
+      return res.status(400).json({ message: 'DNI already exists' });
+    }
+    // Creación del paciente
     const patient = new Patient({
       name,
       surname,
       birthdate,
       dni,
       city,
-      clinicHistoryId,
       username,
       password,
-      email,
-      userId: req.user.userId
+      email
     });
 
-    await patient.save();
+
+    const userId = await createUser(username, password, email, req.cookies.token);
+
+    patient.userId = userId;
+
+    // Guardar el paciente en la base de datos
+    let createdPatient = await patient.save();
+    console.log(createdPatient);
+
+    //await createClinicHistory(createdPatient._id, req.cookies.token);
+
     logger.info(`Patient ${patient._id} created successfully`, {
       method: req.method,
       url: req.originalUrl,
-      ip: req.headers && req.headers['x-forwarded-for'] || req.ip,
-      requestId: req.headers && req.headers['x-request-id'] || null,
+      ip: req.headers?.['x-forwarded-for'] || req.ip,
+      requestId: req.headers?.['x-request-id'] || null,
     });
+
     res.status(201).json(patient);
 
   } catch (error) {
+    console.log(JSON.stringify(error));
+    // Manejo de errores generales
     logger.error('Error creating patient', {
       method: req.method,
       url: req.originalUrl,
       error: error.message,
-      ip: req.headers && req.headers['x-forwarded-for'] || req.ip,
-      requestId: req.headers && req.headers['x-request-id'] || null,
+      ip: req.headers?.['x-forwarded-for'] || req.ip,
+      requestId: req.headers?.['x-request-id'] || null,
     });
-    res.status(500).json({ message: error.message });
+    if (error.message.includes('Error creating user')) {
+      res.status(400).json({ message: error.message });
+    } else if (error.message.includes('Error creating clinic History')) {
+      res.status(400).json({ message: error.message });
+    } else {
+      res.status(500).json({ message: 'Internal server error' });
+    }
   }
+
+}
+
+const createUser = async (username, password, email, token) => {
+  try {
+    const response = await axios.post(`${AUTH_SVC}/users`,
+      {
+        username,
+        password,
+        email,
+        roles: ["patient"],
+      },
+      {
+        withCredentials: true, // Ensures cookies are sent along
+        headers: {
+          // Properly set the Cookie header for the request
+          'Cookie': `token=${token}`,
+          'Content-Type': 'application/json', // Ensure JSON content type
+        },
+      }
+    );
+    return response.data._id;
+  } catch (error) {
+    let errorMessage = "Error creating user: ";
+    if (error.response) {
+      errorMessage += error.response.data.message;
+    }
+    throw new Error(errorMessage);
+  }
+};
+
+const createClinicHistory = async (patientId, token) => {
+  try {
+    const clinicResponse = await axios.post(`${HISTORY_SVC}/histories`, {
+      patientId: patientId
+    }, {
+      withCredentials: true, // Ensures cookies are sent along
+      headers: {
+        // Properly set the Cookie header for the request
+        'Cookie': `token=${token}`,
+        'Content-Type': 'application/json', // Ensure JSON content type
+      },
+    });
+    return clinicResponse.data._id;
+  } catch (error) {
+    let errorMessage = "Error creating clinic History: ";
+    if (error.response) {
+      errorMessage += error.response.data.message;
+    }
+    throw new Error(errorMessage);
+  }
+
+}
+
+const checkAvailableDNI = async (dni) => {
+  const response = await Patient.find({ dni: dni });
+  return response.length > 0;
 }
 
 

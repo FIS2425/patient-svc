@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import api from '../api.js';
 
 const MONGO_URI = process.env.MONGOURL;
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3006;
 
 mongoose
   .connect(MONGO_URI)

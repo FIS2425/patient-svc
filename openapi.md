@@ -88,8 +88,6 @@ Fetches detailed information of a specific patient by their unique ID.
   dni?: string
   // City of residence of the patient
   city?: string
-  // Unique ID of the patient’s medical history
-  clinicHistoryId?: string
   // Username for the patient's access to the system
   username?: string
   // Password for the patient's access to the system
@@ -151,8 +149,6 @@ Retrieves a complete list of all patients registered in the system.
   dni?: string
   // City of residence of the patient
   city?: string
-  // Unique ID of the patient’s medical history
-  clinicHistoryId?: string
   // Username for the patient's access to the system
   username?: string
   // Password for the patient's access to the system
@@ -199,8 +195,6 @@ Creates and saves a new patient in the database, assigning them a unique medical
   dni?: string
   // City of residence of the patient
   city?: string
-  // Unique ID of the patient’s medical history
-  clinicHistoryId?: string
   // Username for the patient's access to the system
   username?: string
   // Password for the patient's access to the system
@@ -230,8 +224,6 @@ Creates and saves a new patient in the database, assigning them a unique medical
   dni?: string
   // City of residence of the patient
   city?: string
-  // Unique ID of the patient’s medical history
-  clinicHistoryId?: string
   // Username for the patient's access to the system
   username?: string
   // Password for the patient's access to the system
@@ -301,8 +293,6 @@ Updates the information of an existing patient using their unique ID.
   dni?: string
   // City of residence of the patient
   city?: string
-  // Unique ID of the patient’s medical history
-  clinicHistoryId?: string
   // Username for the patient's access to the system
   username?: string
   // Password for the patient's access to the system
@@ -352,8 +342,6 @@ Updates the information of an existing patient using their unique ID.
   dni?: string
   // City of residence of the patient
   city?: string
-  // Unique ID of the patient’s medical history
-  clinicHistoryId?: string
   // Username for the patient's access to the system
   username?: string
   // Password for the patient's access to the system

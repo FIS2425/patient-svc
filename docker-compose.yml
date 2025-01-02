@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  mongodb:
+  mongodb-patient:
     restart: unless-stopped
     image: mongo:latest
     container_name: mongodb-patient
@@ -11,9 +11,9 @@ services:
     networks:
       - backend
     ports:
-      - "27017:27017"
+      - "27018:27017"
     volumes:
-      - mongo-data:/data/db
+      - mongo-patient:/data/db
 
   patient:
     restart: unless-stopped
@@ -24,19 +24,21 @@ services:
     environment:
       - MONGOURL=${MONGOURL}
       - PORT=${PORT}
-      - NODE_ENV=${NODE_ENV}
+      - NODE_ENV=development
       - API_PREFIX=${API_PREFIX}
       - KAFKA_HOST=${KAFKA_HOST}
       - JWT_SECRET=${JWT_SECRET}
+      - AUTH_SVC=${AUTH_SVC}
+      - HISTORY_SVC=${HISTORY_SVC}
     depends_on:
-      - mongodb
+      - mongodb-patient
     networks:
       - backend
     ports:
       - "3006:3006"
 
 volumes:
-  mongo-data:
+  mongo-patient:
 
 networks:
   backend:
