@@ -4,7 +4,6 @@ const JWT_SECRET= process.env.NODE_ENV=='test'? process.env.VITE_JWT_SECRET:proc
 
 export const verifyAuth = (req, res, next) => {
   const token = req.cookies.token ? req.cookies.token : (req.headers['authorization'] && req.headers['authorization'].split(' ')[1]);
-  console.log("El token es: ", token);
   if (!token) {
     logger.error('Error on token validation', {
       method: req.method,
@@ -18,8 +17,6 @@ export const verifyAuth = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    console.log("El token decodificado es: ", decoded)
-    console.log("Los roles son: ", decoded.roles)
     if (!decoded.roles.includes('doctor') && !decoded.roles.includes('admin')) {
       logger.error('Error on token validation', {
         method: req.method,
@@ -32,7 +29,6 @@ export const verifyAuth = (req, res, next) => {
       });
       return res.status(403).send({ error: 'Access denied: Insufficient permissions' });
     }
-    console.log("El token decodificado es: ", decoded)
     req.user = decoded;
     next();
   } catch (error) {
