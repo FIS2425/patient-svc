@@ -22,7 +22,7 @@ const sample = [
     name: 'John',
     surname: 'Doe',
     birthdate: '2000-05-15T00:00:00.000Z',
-    dni: '12345678Z',
+    dni: '50106073K',
     city: 'Sevilla',
     userId: '8d0f780c-45f6-423d-ad86-87ef69740da9'
   },
@@ -31,7 +31,7 @@ const sample = [
     name: 'Ana',
     surname: 'López',
     birthdate: '1992-08-22T00:00:00.000Z',
-    dni: '87654321X',
+    dni: '72590723D',
     city: 'Madrid',
     userId: '03ceec7e-6682-42be-b4ad-bcfe1baf73dc'
   },
@@ -40,7 +40,7 @@ const sample = [
     name: 'Carlos',
     surname: 'Martínez',
     birthdate: '1985-03-10T00:00:00.000Z',
-    dni: '45678912Y',
+    dni: '16071962E',
     city: 'Barcelona',
     userId: '⁠307408c6-954c-4505-bb4b-74e713267b84'
   },
@@ -49,7 +49,7 @@ const sample = [
     name: 'Lucía',
     surname: 'Fernández',
     birthdate: '1998-12-05T00:00:00.000Z',
-    dni: '11223344W',
+    dni: '79546831C',
     city: 'Valencia',
     userId: '⁠f1c78f18-b62e-4b0f-80fa-1655be4cd80e'
   }
