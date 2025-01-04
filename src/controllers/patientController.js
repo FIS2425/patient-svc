@@ -52,7 +52,6 @@ export const register = async (req, res) => {
     createdPatient = await patient.save();
 
     // Crear historial clínico
-    await createClinicHistory(createdPatient._id, req.cookies.token);
 
     logger.info(`Patient ${createdPatient._id} created successfully`, {
       method: req.method,
@@ -252,7 +251,7 @@ export const updatePatient = async (req, res) => {
       return res.status(400).json({ message: 'Missing patient ID' });
     }
 
-    const updatedPatient = await Patient.findByIdAndUpdate(id, updateFields, { new: true });
+    const updatedPatient = await Patient.findByIdAndUpdate(id, updateFields, { new: true, runValidators: true });
     if (!updatedPatient) {
       logger.error('Patient not found', {
         method: req.method,
