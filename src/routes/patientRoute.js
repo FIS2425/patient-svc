@@ -1,11 +1,14 @@
 import express from 'express';
-import { register,obtainAll,deletePatient} from '../controllers/patientController.js';
-
+import {register,obtainAll,deletePatient, updatePatient,getPatientById} from '../controllers/patientController.js';
+import { verifyAuth } from '../middleware/verifyAuth.js';
+import { verifyAdmin } from '../middleware/verifyAdmin.js';
 
 const router = express.Router();
 
-router.post('/register', register);
-router.get('/obtainAll', obtainAll);
-router.delete('/deletePatient/:id', deletePatient);
+router.post('/',verifyAuth,verifyAdmin,register);
+router.get('/', obtainAll);
+router.delete('/:id', verifyAuth, verifyAdmin,deletePatient);
+router.put('/:id', verifyAuth, verifyAdmin,updatePatient);
+router.get('/:id', getPatientById);
 
 export default router;

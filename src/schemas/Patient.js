@@ -44,10 +44,6 @@ const patientSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  clinicHistoryId: {
-    type: String,
-    required: true
-  },
   userId: {
     type: String,
     required: true

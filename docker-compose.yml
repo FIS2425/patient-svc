@@ -1,19 +1,19 @@
 version: "3.8"
 
 services:
-  mongodb:
+  mongodb-patient:
     restart: unless-stopped
     image: mongo:latest
-    container_name: mongodb
+    container_name: mongodb-patient
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGOADMIN}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGOPASS}
     networks:
       - backend
     ports:
-      - "27017:27017"
+      - "27018:27017"
     volumes:
-      - mongo-data:/data/db
+      - mongo-patient:/data/db
 
   patient:
     restart: unless-stopped
@@ -22,19 +22,23 @@ services:
       dockerfile: Dockerfile
     container_name: patient
     environment:
-      - MONGODB_URL=${MONGOURL}
-      - PORT = 3006
+      - MONGOURL=${MONGOURL}
+      - PORT=${PORT}
+      - NODE_ENV=development
+      - API_PREFIX=${API_PREFIX}
+      - KAFKA_HOST=${KAFKA_HOST}
+      - JWT_SECRET=${JWT_SECRET}
+      - AUTH_SVC=${AUTH_SVC}
+      - HISTORY_SVC=${HISTORY_SVC}
     depends_on:
-      - mongodb
+      - mongodb-patient
     networks:
       - backend
     ports:
-      - "3001:3001"
-    volumes:
-      - .:/patient-svc
+      - "3006:3006"
 
 volumes:
-  mongo-data:
+  mongo-patient:
 
 networks:
   backend:
