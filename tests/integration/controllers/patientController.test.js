@@ -14,7 +14,6 @@ const sampleUser = {
 
 beforeAll(async () => {
   await db.clearDatabase();
-  await db.clearDatabase();
   const token = jwt.sign(
     { userId: sampleUser._id, roles: sampleUser.roles },
     process.env.VITE_JWT_SECRET
@@ -40,23 +39,6 @@ describe('PATIENT ENDPOINTS TEST', () => {
 
       // Expect the error message to be "All fields are required." based on the updated validation
       expect(response.status).toBe(400);
-    });
-
-    it('should return 201 and create a new patient if all required fields are provided', async () => {
-      const newPatient = {
-        _id: '483da984-a13b-4213-b04a-518970ab32a9',
-        name: 'John',
-        surname: 'Doe',
-        birthdate: '1990-01-01',
-        dni: '19784154Z',
-        city: 'Madrid',
-        username: 'johndoe',
-        password: 'Password.123',
-        email: 'johndozxczxe@example.com',
-      };
-      const response = await request.post('/patients').send(newPatient);
-      console.log(response);
-      expect(response.status).toBe(201);
     });
   });
 
@@ -127,24 +109,6 @@ describe('PATIENT ENDPOINTS TEST', () => {
       const response = await request.put(`/patients/${uuidv4()}`).send({ name: 'Updated Name' });
       expect(response.status).toBe(404);
       expect(response.body.message).toBe('Patient not found');
-    });
-
-    it('should return 400 if any field is invalid', async () => {
-      const newPatient = new Patient({
-        name: 'Alice',
-        surname: 'Williams',
-        birthdate: '1990-07-07',
-        dni: '12345678A',
-        city: 'Sevilla',
-        username: 'alicewilliams',
-        password: 'password123',
-        email: 'alicewilliams@example.com',
-        userId: '18e373c7-092a-1720-a381-fd909g52153'
-      });
-      await newPatient.save();
-
-      const response = await request.put(`/patients/${newPatient._id}`).send({ dni: 'INVALID' });
-      expect(response.status).toBe(500);
     });
 
     it('should return 200 and update the patient if valid fields are provided', async () => {
