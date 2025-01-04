@@ -3,6 +3,7 @@ import supertest from 'supertest';
 
 import * as db from './database';
 import configureApp from '../../src/api.js';
+process.env.API_PREFIX = '';
 
 const app = configureApp();
 
@@ -12,7 +13,7 @@ let request;
 beforeAll(async () => {
   await db.connect();
   server = app.listen(0);
-  request = supertest(server);
+  request = supertest.agent(server);
 });
 
 afterEach(async () => {
