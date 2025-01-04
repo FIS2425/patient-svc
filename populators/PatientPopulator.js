@@ -25,7 +25,7 @@ const sample = [
     dni: '12345678Z',
     city: 'Sevilla',
     clinicHistoryId: 'CH12345',
-    userId: 'user001'
+    userId: '8d0f780c-45f6-423d-ad86-87ef69740da9'
   },
   {
     _id: 'a2c7f9d1-5b3a-42d8-8e5f-7c4b9f1e8a92',
@@ -35,7 +35,7 @@ const sample = [
     dni: '87654321X',
     city: 'Madrid',
     clinicHistoryId: 'CH67890',
-    userId: 'user002'
+    userId: '03ceec7e-6682-42be-b4ad-bcfe1baf73dc'
   },
   {
     _id: 'd4f8b1a9-3e7c-45d2-9c6a-2b9f7e4a8c53',
@@ -45,7 +45,7 @@ const sample = [
     dni: '45678912Y',
     city: 'Barcelona',
     clinicHistoryId: 'CH45612',
-    userId: 'user003'
+    userId: '⁠307408c6-954c-4505-bb4b-74e713267b84'
   },
   {
     _id: 'b1a7f9e3-6c5d-49d2-8f4a-3b7e9f5a6c71',
@@ -55,7 +55,7 @@ const sample = [
     dni: '11223344W',
     city: 'Valencia',
     clinicHistoryId: 'CH33445',
-    userId: 'user004'
+    userId: '⁠f1c78f18-b62e-4b0f-80fa-1655be4cd80e'
   }
 ];
 
