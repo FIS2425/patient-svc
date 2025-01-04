@@ -5,14 +5,13 @@ import axios from 'axios';
 const AUTH_SVC = process.env.AUTH_SVC || 'http://localhost:3001/api/v1';
 const HISTORY_SVC = process.env.HISTORY_SVC || 'http://localhost:3005/api/v1';
 export const register = async (req, res) => {
-  let createdPatient = null; // Para rastrear si el paciente fue creado
-  let userId = null; // Para rastrear si el usuario fue creado
-
+  let patientId = null;
+  let userId = null;
   try {
-    const { name, surname, birthdate, dni, city, username, password, email } = req.body;
+    const { name, surname, birthdate, dni, city, password, email } = req.body;
 
     // Validación de campos requeridos
-    if (!name || !surname || !birthdate || !dni || !city || !username || !password || !email) {
+    if (!name || !surname || !birthdate || !dni || !city || !password || !email) {
       logger.error('Missing fields', {
         method: req.method,
         url: req.originalUrl,
@@ -35,8 +34,8 @@ export const register = async (req, res) => {
     }
 
     // Crear el usuario asociado
-    userId = await createUser(username, password, email, req.cookies.token);
-
+    userId = await createUser(password, email, req.cookies.token);
+  
     // Crear el paciente
     const patient = new Patient({
       name,
@@ -44,45 +43,22 @@ export const register = async (req, res) => {
       birthdate,
       dni,
       city,
-      username,
-      password,
-      email,
       userId,
     });
-    createdPatient = await patient.save();
+    const newPatient = await patient.save();
+    patientId = newPatient._id;
 
-    // Crear historial clínico
+    await createClinicHistory(newPatient._id, req.cookies.token);
 
-    logger.info(`Patient ${createdPatient._id} created successfully`, {
+    logger.info(`Patient ${newPatient._id} created successfully`, {
       method: req.method,
       url: req.originalUrl,
       ip: req.headers?.['x-forwarded-for'] || req.ip,
       requestId: req.headers?.['x-request-id'] || null,
     });
 
-    res.status(201).json(createdPatient);
+    res.status(201).json(newPatient);
   } catch (error) {
-    // Rollback manual
-    try {
-      if (createdPatient) {
-        // Si el paciente fue creado, eliminarlo
-        console.log('Paciente eliminado');
-        await Patient.findByIdAndDelete(createdPatient._id);
-      }
-      if (userId) {
-        // Si el usuario fue creado, eliminarlo
-        console.log('Usuario eliminado');
-        await deleteUser(userId, req.cookies.token);
-      }
-    } catch (rollbackError) {
-      logger.error('Error during rollback', {
-        method: req.method,
-        url: req.originalUrl,
-        error: rollbackError.message,
-        ip: req.headers?.['x-forwarded-for'] || req.ip,
-        requestId: req.headers?.['x-request-id'] || null,
-      });
-    }
     logger.error('Error creating patient', {
       method: req.method,
       url: req.originalUrl,
@@ -90,10 +66,15 @@ export const register = async (req, res) => {
       ip: req.headers?.['x-forwarded-for'] || req.ip,
       requestId: req.headers?.['x-request-id'] || null,
     });
-
+    
+    if (userId) {
+      await deleteUser(userId, req.cookies.token);
+    }
+    
     if (error.message.includes('Error creating user')) {
       res.status(400).json({ message: error.message });
     } else if (error.message.includes('Error creating clinic History')) {
+      await rollbackPatientCreation(patientId);
       res.status(400).json({ message: error.message });
     } else {
       res.status(500).json({ message: 'Internal server error' });
@@ -101,12 +82,24 @@ export const register = async (req, res) => {
   }
 };
 
+const rollbackPatientCreation = async (patientId) => {
+  try {
+    const patient = await Patient.findByIdAndDelete(patientId);
+    if (!patient) {
+      throw new Error('Error when rolling back patient creation');
+    }
+    return patient;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
 
-const createUser = async (username, password, email, token) => {
+
+
+const createUser = async ( password, email, token) => {
   try {
     const response = await axios.post(`${AUTH_SVC}/users`,
       {
-        username,
         password,
         email,
         roles: ['patient'],
