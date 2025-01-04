@@ -55,6 +55,15 @@ const sample = [
   }
 ];
 
+const removeAllPatients = async () => {
+  try {
+    await Patient.deleteMany({});
+    console.log('All Patients  have been removed');
+  } catch (error) {
+    console.error('Error removing Patients:', error);
+  }
+};
+
 async function populatePatients() {
   try {
     for (const apptData of sample) {
@@ -73,5 +82,6 @@ async function populatePatients() {
 
 (async () => {
   await connectToDatabase();
+  await removeAllPatients();
   await populatePatients();
 })();
