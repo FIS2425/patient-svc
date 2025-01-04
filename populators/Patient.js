@@ -24,7 +24,6 @@ const sample = [
     birthdate: '2000-05-15T00:00:00.000Z',
     dni: '12345678Z',
     city: 'Sevilla',
-    clinicHistoryId: 'CH12345',
     userId: '8d0f780c-45f6-423d-ad86-87ef69740da9'
   },
   {
@@ -34,7 +33,6 @@ const sample = [
     birthdate: '1992-08-22T00:00:00.000Z',
     dni: '87654321X',
     city: 'Madrid',
-    clinicHistoryId: 'CH67890',
     userId: '03ceec7e-6682-42be-b4ad-bcfe1baf73dc'
   },
   {
@@ -44,7 +42,6 @@ const sample = [
     birthdate: '1985-03-10T00:00:00.000Z',
     dni: '45678912Y',
     city: 'Barcelona',
-    clinicHistoryId: 'CH45612',
     userId: '⁠307408c6-954c-4505-bb4b-74e713267b84'
   },
   {
@@ -54,7 +51,6 @@ const sample = [
     birthdate: '1998-12-05T00:00:00.000Z',
     dni: '11223344W',
     city: 'Valencia',
-    clinicHistoryId: 'CH33445',
     userId: '⁠f1c78f18-b62e-4b0f-80fa-1655be4cd80e'
   }
 ];
