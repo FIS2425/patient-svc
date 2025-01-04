@@ -1,8 +1,9 @@
-import { beforeAll, afterAll, describe, expect, it } from 'vitest';
+import { beforeAll, afterAll, describe, expect, it,beforeEach } from 'vitest';
 import Patient from '../../../src/schemas/Patient.js';
 import * as db from '../../setup/database';
 import { request } from '../../setup/setup';
 import { v4 as uuidv4 } from 'uuid';
+import jwt from 'jsonwebtoken';
 
 beforeAll(async () => {
   await db.clearDatabase();
@@ -10,6 +11,21 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await db.clearDatabase();
+});
+
+const sampleUser = {
+  _id: uuidv4(),
+  email: 'testuser2@mail.com',
+  password: 'pAssw0rd!',
+  roles: ['patient'],
+};
+
+beforeEach(async () => {
+  const token = jwt.sign(
+    { userId: sampleUser._id, roles: sampleUser.roles },
+    process.env.VITE_JWT_SECRET
+  );
+  request.set('Cookie', `token=${token}`);
 });
 
 describe('PATIENT ENDPOINTS TEST', () => {
@@ -29,7 +45,6 @@ describe('PATIENT ENDPOINTS TEST', () => {
         birthdate: '1990-01-01',
         dni: '78106136E',
         city: 'Madrid',
-        clinicHistoryId: uuidv4(),
         username: 'johndoe',
         password: 'password123',
         email: 'johndoe@example.com',
@@ -64,7 +79,6 @@ describe('PATIENT ENDPOINTS TEST', () => {
         birthdate: '1992-05-05',
         dni: '78106136E',
         city: 'Barcelona',
-        clinicHistoryId: uuidv4(),
         username: 'janesmith',
         password: 'password123',
         email: 'janesmith@example.com',
@@ -92,7 +106,6 @@ describe('PATIENT ENDPOINTS TEST', () => {
         birthdate: '1985-10-10',
         dni: '78106136E',
         city: 'Valencia',
-        clinicHistoryId: uuidv4(),
         username: 'davidjones',
         password: 'password123',
         email: 'davidjones@example.com',
@@ -120,7 +133,6 @@ describe('PATIENT ENDPOINTS TEST', () => {
         birthdate: '1990-07-07',
         dni: '78106136E',
         city: 'Sevilla',
-        clinicHistoryId: uuidv4(),
         username: 'alicewilliams',
         password: 'password123',
         email: 'alicewilliams@example.com',
@@ -140,7 +152,6 @@ describe('PATIENT ENDPOINTS TEST', () => {
         birthdate: '1980-03-03',
         dni: '78106136E',
         city: 'Madrid',
-        clinicHistoryId: uuidv4(),
         username: 'markjohnson',
         password: 'password123',
         email: 'markjohnson@example.com',

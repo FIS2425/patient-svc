@@ -3,8 +3,7 @@ import logger from '../config/logger.js';
 const JWT_SECRET= process.env.NODE_ENV=='test'? process.env.VITE_JWT_SECRET:process.env.JWT_SECRET;
 
 export const verifyAuth = (req, res, next) => {
-  const token = req.cookies.token ? req.cookies.token : (req.headers['authorization'] && req.headers['authorization'].split(' ')[1]);
-
+  const token = req.cookies && req.cookies.token ? req.cookies.token : (req.headers['authorization'] && req.headers['authorization'].split(' ')[1]);
   if (!token) {
     logger.error('Error on token validation', {
       method: req.method,
@@ -18,7 +17,7 @@ export const verifyAuth = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    if (!decoded.roles.includes('patient') && !decoded.roles.includes('clinicadmin')) {
+    if (!decoded.roles.includes('doctor') && !decoded.roles.includes('admin')) {
       logger.error('Error on token validation', {
         method: req.method,
         url: req.originalUrl,
