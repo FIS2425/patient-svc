@@ -1,7 +1,7 @@
 import { beforeAll, afterAll, describe, expect, it,beforeEach } from 'vitest';
 import Patient from '../../../src/schemas/Patient.js';
-import * as db from '../../setup/database';
-import { request } from '../../setup/setup';
+import * as db from '../../setup/database.js';
+import { request } from '../../setup/setup.js';
 import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 
