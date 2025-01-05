@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/',verifyAuth,verifyAdmin,register);
 router.get('/', obtainAll);
 router.delete('/:id', verifyAuth, verifyAdmin,deletePatient);
-router.put('/:id', verifyAuth, verifyAdmin,updatePatient);
+router.put('/:id',updatePatient);
 router.get('/:id', getPatientById);
 
 export default router;

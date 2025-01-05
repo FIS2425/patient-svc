@@ -17,7 +17,7 @@ export const verifyAuth = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    if (!decoded.roles.includes('doctor') && !decoded.roles.includes('admin')) {
+    if (!decoded.roles.includes('doctor') && !decoded.roles.includes('admin') && !decoded.roles.includes('clinicadmin')) {
       logger.error('Error on token validation', {
         method: req.method,
         url: req.originalUrl,
