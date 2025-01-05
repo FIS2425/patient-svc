@@ -8,11 +8,10 @@ metadata:
     io.kompose.service: patient-svc
   name: patient-svc
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - protocol: TCP
       port: 3006
       targetPort: 3006
-      nodePort: 30006
   selector:
     io.kompose.service: patient-svc
