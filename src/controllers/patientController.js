@@ -48,7 +48,7 @@ export const register = async (req, res) => {
     const newPatient = await patient.save();
     patientId = newPatient._id;
 
-    //await createClinicHistory(newPatient._id, req.cookies.token);
+    await createClinicHistory(newPatient._id, req.cookies.token);
 
     logger.info(`Patient ${newPatient._id} created successfully`, {
       method: req.method,
