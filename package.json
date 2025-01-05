@@ -54,7 +54,7 @@
     "kafkajs": "2.2.4",
     "mongoose": "8.9.3",
     "swagger-ui-express": "5.0.1",
-    "uuid": "11.0.3",
+    "uuid": "11.0.4",
     "winston": "3.17.0",
     "yamljs": "0.3.0"
   }
