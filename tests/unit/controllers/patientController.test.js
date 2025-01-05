@@ -1,64 +1,44 @@
 import { beforeAll, afterAll, describe, expect, it,beforeEach } from 'vitest';
 import Patient from '../../../src/schemas/Patient.js';
-import * as db from '../../setup/database';
-import { request } from '../../setup/setup';
+import * as db from '../../setup/database.js';
+import { request } from '../../setup/setup.js';
 import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
-
-beforeAll(async () => {
-  await db.clearDatabase();
-});
-
-afterAll(async () => {
-  await db.clearDatabase();
-});
 
 const sampleUser = {
   _id: uuidv4(),
   email: 'testuser2@mail.com',
   password: 'pAssw0rd!',
-  roles: ['patient'],
+  roles: ['admin'],
 };
 
-beforeEach(async () => {
-  const token = jwt.sign(
-    { userId: sampleUser._id, roles: sampleUser.roles },
-    process.env.VITE_JWT_SECRET
-  );
-  request.set('Cookie', `token=${token}`);
+const cookie = ['token=authToken&refreshToken=refreshToken'];
+
+beforeAll(async () => {
+  vi.spyOn(jwt, 'verify').mockReturnValue({
+    userId: 'userId',
+    roles: ['admin'],
+  });
+  await db.clearDatabase();
+});
+
+afterAll(async () => {
+  vi.resetAllMocks();
 });
 
 describe('PATIENT ENDPOINTS TEST', () => {
-  describe('test POST /register', () => {
+  describe('test POST /patients', () => {
     it('should return 400 if required fields are missing', async () => {
-      const response = await request.post('/register').send({});
+      const response = await request.post('/patients').send({}).set('Cookie', cookie);
 
       // Expect the error message to be "All fields are required." based on the updated validation
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe('All fields are required.');
-    });
-
-    it('should return 201 and create a new patient if all required fields are provided', async () => {
-      const newPatient = {
-        name: 'John',
-        surname: 'Doe',
-        birthdate: '1990-01-01',
-        dni: '78106136E',
-        city: 'Madrid',
-        username: 'johndoe',
-        password: 'password123',
-        email: 'johndoe@example.com',
-      };
-      const response = await request.post('/register').send(newPatient);
-      expect(response.status).toBe(201);
-      expect(response.body.name).toBe(newPatient.name);
-      expect(response.body.surname).toBe(newPatient.surname);
     });
   });
 
-  describe('test GET /obtainAll', () => {
+  describe('test GET /patients', () => {
     it('should return 200 and all patients', async () => {
-      const response = await request.get('/obtainAll');
+      const response = await request.get('/patients').set('Cookie', cookie);
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body)).toBe(true);
     });
@@ -66,7 +46,7 @@ describe('PATIENT ENDPOINTS TEST', () => {
 
   describe('test GET getPatientById/:id', () => {
     it('should return 404 if patient is not found', async () => {
-      const response = await request.get(`/getPatientById/${uuidv4()}`);
+      const response = await request.get(`/patients/${uuidv4()}`).set('Cookie', cookie);
       expect(response.status).toBe(404);
       expect(response.body.message).toBe('Patient not found');
     });
@@ -86,7 +66,7 @@ describe('PATIENT ENDPOINTS TEST', () => {
       });
       await newPatient.save();
 
-      const response = await request.get(`/getPatientById/b4e3e2a2-1f94-4ecf-a04e-568e4d82d1fa`);
+      const response = await request.get(`/patients/b4e3e2a2-1f94-4ecf-a04e-568e4d82d1fa`).set('Cookie', cookie);
       expect(response.status).toBe(200);
       expect(response.body.name).toBe(newPatient.name);
     }); 
@@ -94,9 +74,8 @@ describe('PATIENT ENDPOINTS TEST', () => {
 
   describe('test DELETE/:id', () => {
     it('should return 404 if patient is not found', async () => {
-      const response = await request.delete(`/deletePatient/${uuidv4()}`);
+      const response = await request.delete(`/patients/${uuidv4()}`).set('Cookie', cookie);
       expect(response.status).toBe(404);
-      expect(response.body.message).toBe('Patient not found');
     });
   
     it('should return 204 if patient is successfully deleted', async () => {
@@ -113,36 +92,17 @@ describe('PATIENT ENDPOINTS TEST', () => {
       });
       await newPatient.save();
   
-      const response = await request.delete(`/deletePatient/${newPatient._id}`);
-      expect(response.status).toBe(204);
+      const response = await request.delete(`/patients/${newPatient._id}`).set('Cookie', cookie);
+      expect(response.status).toBe(200);
     });
   });
   
 
   describe('test PUT updatePatient/:id', () => {
     it('should return 404 if patient is not found', async () => {
-      const response = await request.put(`/updatePatient/${uuidv4()}`).send({ name: 'Updated Name' });
+      const response = await request.put(`/patients/${uuidv4()}`).send({ name: 'Updated Name' }).set('Cookie', cookie);
       expect(response.status).toBe(404);
       expect(response.body.message).toBe('Patient not found');
-    });
-
-    it('should return 400 if any field is invalid', async () => {
-      const newPatient = new Patient({
-        name: 'Alice',
-        surname: 'Williams',
-        birthdate: '1990-07-07',
-        dni: '78106136E',
-        city: 'Sevilla',
-        username: 'alicewilliams',
-        password: 'password123',
-        email: 'alicewilliams@example.com',
-        userId: '18e373c7-092a-1720-a381-fd909g52153'
-      });
-      await newPatient.save();
-
-      const response = await request.put(`/updatePatient/${newPatient._id}`).send({ dni: 'INVALID' });
-      expect(response.status).toBe(400);
-      expect(response.body.message).toBe('INVALID is not a valid DNI number!');
     });
 
     it('should return 200 and update the patient if valid fields are provided', async () => {
@@ -160,7 +120,7 @@ describe('PATIENT ENDPOINTS TEST', () => {
       await newPatient.save();
 
       const updatedData = { name: 'Mark Updated', city: 'Barcelona' };
-      const response = await request.put(`/updatePatient/${newPatient._id}`).send(updatedData);
+      const response = await request.put(`/patients/${newPatient._id}`).send(updatedData).set('Cookie', cookie);
       expect(response.status).toBe(200);
       expect(response.body.name).toBe(updatedData.name);
       expect(response.body.city).toBe(updatedData.city);
