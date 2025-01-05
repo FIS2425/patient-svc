@@ -12,30 +12,24 @@ const sampleUser = {
   roles: ['admin'],
 };
 
+const cookie = ['token=authToken&refreshToken=refreshToken'];
+
 beforeAll(async () => {
+  vi.spyOn(jwt, 'verify').mockReturnValue({
+    userId: 'userId',
+    roles: ['admin'],
+  });
   await db.clearDatabase();
-  const token = jwt.sign(
-    { userId: sampleUser._id, roles: sampleUser.roles },
-    process.env.VITE_JWT_SECRET
-  );
-  request.set('Cookie', `token=${token}`);
 });
 
 afterAll(async () => {
-  await db.clearDatabase();
-});
-beforeEach(async () => {
-  const token = jwt.sign(
-    { userId: sampleUser._id, roles: sampleUser.roles },
-    process.env.VITE_JWT_SECRET
-  );
-  request.set('Cookie', `token=${token}`);
+  vi.resetAllMocks();
 });
 
 describe('PATIENT ENDPOINTS TEST', () => {
   describe('test POST /patients', () => {
     it('should return 400 if required fields are missing', async () => {
-      const response = await request.post('/patients').send({});
+      const response = await request.post('/patients').send({}).set('Cookie', cookie);
 
       // Expect the error message to be "All fields are required." based on the updated validation
       expect(response.status).toBe(400);
@@ -44,7 +38,7 @@ describe('PATIENT ENDPOINTS TEST', () => {
 
   describe('test GET /patients', () => {
     it('should return 200 and all patients', async () => {
-      const response = await request.get('/patients');
+      const response = await request.get('/patients').set('Cookie', cookie);
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body)).toBe(true);
     });
@@ -52,7 +46,7 @@ describe('PATIENT ENDPOINTS TEST', () => {
 
   describe('test GET getPatientById/:id', () => {
     it('should return 404 if patient is not found', async () => {
-      const response = await request.get(`/patients/${uuidv4()}`);
+      const response = await request.get(`/patients/${uuidv4()}`).set('Cookie', cookie);
       expect(response.status).toBe(404);
       expect(response.body.message).toBe('Patient not found');
     });
@@ -72,7 +66,7 @@ describe('PATIENT ENDPOINTS TEST', () => {
       });
       await newPatient.save();
 
-      const response = await request.get(`/patients/b4e3e2a2-1f94-4ecf-a04e-568e4d82d1fa`);
+      const response = await request.get(`/patients/b4e3e2a2-1f94-4ecf-a04e-568e4d82d1fa`).set('Cookie', cookie);
       expect(response.status).toBe(200);
       expect(response.body.name).toBe(newPatient.name);
     }); 
@@ -80,7 +74,7 @@ describe('PATIENT ENDPOINTS TEST', () => {
 
   describe('test DELETE/:id', () => {
     it('should return 404 if patient is not found', async () => {
-      const response = await request.delete(`/patients/${uuidv4()}`);
+      const response = await request.delete(`/patients/${uuidv4()}`).set('Cookie', cookie);
       expect(response.status).toBe(404);
     });
   
@@ -98,7 +92,7 @@ describe('PATIENT ENDPOINTS TEST', () => {
       });
       await newPatient.save();
   
-      const response = await request.delete(`/patients/${newPatient._id}`);
+      const response = await request.delete(`/patients/${newPatient._id}`).set('Cookie', cookie);
       expect(response.status).toBe(200);
     });
   });
@@ -106,7 +100,7 @@ describe('PATIENT ENDPOINTS TEST', () => {
 
   describe('test PUT updatePatient/:id', () => {
     it('should return 404 if patient is not found', async () => {
-      const response = await request.put(`/patients/${uuidv4()}`).send({ name: 'Updated Name' });
+      const response = await request.put(`/patients/${uuidv4()}`).send({ name: 'Updated Name' }).set('Cookie', cookie);
       expect(response.status).toBe(404);
       expect(response.body.message).toBe('Patient not found');
     });
@@ -126,7 +120,7 @@ describe('PATIENT ENDPOINTS TEST', () => {
       await newPatient.save();
 
       const updatedData = { name: 'Mark Updated', city: 'Barcelona' };
-      const response = await request.put(`/patients/${newPatient._id}`).send(updatedData);
+      const response = await request.put(`/patients/${newPatient._id}`).send(updatedData).set('Cookie', cookie);
       expect(response.status).toBe(200);
       expect(response.body.name).toBe(updatedData.name);
       expect(response.body.city).toBe(updatedData.city);
