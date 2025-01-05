@@ -1,7 +1,7 @@
 import logger from '../config/logger.js';
 
 export const verifyAdmin = (req, res, next) => {
-  if (req.user.roles.includes('admin') || req.user.roles.includes('doctor')) {
+  if (req.user.roles.includes('admin') || req.user.roles.includes('doctor') || req.user.roles.includes('clinicadmin')) {
     next();
   } else {
     logger.error('User is not an admin', {
