@@ -53,6 +53,7 @@
     "jsonwebtoken": "9.0.2",
     "kafkajs": "2.2.4",
     "mongoose": "8.9.3",
+    "opossum": "8.4.0",
     "swagger-ui-express": "5.0.1",
     "uuid": "11.0.4",
     "winston": "3.17.0",

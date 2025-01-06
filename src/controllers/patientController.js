@@ -1,10 +1,26 @@
 import Patient from '../schemas/Patient.js';
 import logger from '../config/logger.js';
 import axios from 'axios';
+import CircuitBreaker from 'opossum';
 
 const AUTH_SVC = process.env.AUTH_SVC || 'http://localhost:3001/api/v1';
 const HISTORY_SVC = process.env.HISTORY_SVC || 'http://localhost:3005/api/v1';
+
+const circuitOptions = {
+  timeout: 5000, 
+  errorThresholdPercentage: 50, 
+  resetTimeout: 10000,
+};
+
 export const register = async (req, res) => {
+  const createUserWithCircuitBreaker = new CircuitBreaker(createUser, circuitOptions);
+  const createClinicHistoryWithCircuitBreaker = new CircuitBreaker(createClinicHistory, circuitOptions);
+
+  createUserWithCircuitBreaker.on('open', () => console.error('Circuit Breaker OPEN for createUser!'));
+  createUserWithCircuitBreaker.on('close', () => console.info('Circuit Breaker CLOSED for createUser!'));
+  createClinicHistoryWithCircuitBreaker.on('open', () => console.error('Circuit Breaker OPEN for createClinicHistory!'));
+  createClinicHistoryWithCircuitBreaker.on('close', () => console.info('Circuit Breaker CLOSED for createClinicHistory!'));
+
   let patientId = null;
   let userId = null;
   try {
@@ -33,9 +49,8 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: 'DNI already exists' });
     }
 
-    // Crear el usuario asociado
-    userId = await createUser(password, email, req.cookies.token);
-  
+    userId = await createUserWithCircuitBreaker.fire(password, email, req.cookies.token);
+
     // Crear el paciente
     const patient = new Patient({
       name,
@@ -48,7 +63,7 @@ export const register = async (req, res) => {
     const newPatient = await patient.save();
     patientId = newPatient._id;
 
-    await createClinicHistory(newPatient._id, req.cookies.token);
+    await createClinicHistoryWithCircuitBreaker.fire(newPatient._id, req.cookies.token);
 
     logger.info(`Patient ${newPatient._id} created successfully`, {
       method: req.method,
@@ -66,12 +81,15 @@ export const register = async (req, res) => {
       ip: req.headers?.['x-forwarded-for'] || req.ip,
       requestId: req.headers?.['x-request-id'] || null,
     });
-    
+
     if (userId) {
       await deleteUser(userId, req.cookies.token);
     }
-    
-    if (error.message.includes('Error creating user')) {
+
+    // Detectar error del Circuit Breaker por mensaje
+    if (error.message === 'Breaker is open') {
+      res.status(503).json({ message: 'Service temporarily unavailable' });
+    } else if (error.message.includes('Error creating user')) {
       res.status(400).json({ message: error.message });
     } else if (error.message.includes('Error creating clinic History')) {
       await rollbackPatientCreation(patientId);
