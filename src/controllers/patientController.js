@@ -16,89 +16,85 @@ export const register = async (req, res) => {
   const createUserWithCircuitBreaker = new CircuitBreaker(createUser, circuitOptions);
   const createClinicHistoryWithCircuitBreaker = new CircuitBreaker(createClinicHistory, circuitOptions);
 
-  createUserWithCircuitBreaker.on('open', () => console.error('Circuit Breaker OPEN for createUser!'));
-  createUserWithCircuitBreaker.on('close', () => console.info('Circuit Breaker CLOSED for createUser!'));
-  createClinicHistoryWithCircuitBreaker.on('open', () => console.error('Circuit Breaker OPEN for createClinicHistory!'));
-  createClinicHistoryWithCircuitBreaker.on('close', () => console.info('Circuit Breaker CLOSED for createClinicHistory!'));
+  createUserWithCircuitBreaker.on('open', () => console.error('Circuit Breaker OPEN for AUTH_SVC!'));
+  createUserWithCircuitBreaker.on('close', () => console.info('Circuit Breaker CLOSED for AUTH_SVC!'));
+  createClinicHistoryWithCircuitBreaker.on('open', () => console.error('Circuit Breaker OPEN for HISTORY_SVC!'));
+  createClinicHistoryWithCircuitBreaker.on('close', () => console.info('Circuit Breaker CLOSED for HISTORY_SVC!'));
 
   let patientId = null;
   let userId = null;
+
   try {
     const { name, surname, birthdate, dni, city, password, email } = req.body;
 
-    // Validación de campos requeridos
     if (!name || !surname || !birthdate || !dni || !city || !password || !email) {
-      logger.error('Missing fields', {
-        method: req.method,
-        url: req.originalUrl,
-        ip: req.headers?.['x-forwarded-for'] || req.ip,
-        requestId: req.headers?.['x-request-id'] || null,
-      });
+      logger.error('Missing fields', { method: req.method, url: req.originalUrl });
       return res.status(400).json({ message: 'Missing fields' });
     }
 
-    // Verificar si el DNI ya existe
     const availableDNI = await checkAvailableDNI(dni);
     if (availableDNI) {
-      logger.error('DNI already exists', {
-        method: req.method,
-        url: req.originalUrl,
-        ip: req.headers?.['x-forwarded-for'] || req.ip,
-        requestId: req.headers?.['x-request-id'] || null,
-      });
+      logger.error('DNI already exists', { method: req.method, url: req.originalUrl });
       return res.status(400).json({ message: 'DNI already exists' });
     }
 
+    // Crear usuario en AUTH_SVC
     userId = await createUserWithCircuitBreaker.fire(password, email, req.cookies.token);
-
-    // Crear el paciente
-    const patient = new Patient({
-      name,
-      surname,
-      birthdate,
-      dni,
-      city,
-      userId,
-    });
+    
+    // Crear paciente en la base de datos local
+    const patient = new Patient({ name, surname, birthdate, dni, city, userId });
     const newPatient = await patient.save();
     patientId = newPatient._id;
 
+    // Crear historial clínico en HISTORY_SVC
     await createClinicHistoryWithCircuitBreaker.fire(newPatient._id, req.cookies.token);
 
-    logger.info(`Patient ${newPatient._id} created successfully`, {
-      method: req.method,
-      url: req.originalUrl,
-      ip: req.headers?.['x-forwarded-for'] || req.ip,
-      requestId: req.headers?.['x-request-id'] || null,
-    });
-
+    logger.info(`Patient ${newPatient._id} created successfully`);
     res.status(201).json(newPatient);
-  } catch (error) {
-    logger.error('Error creating patient', {
-      method: req.method,
-      url: req.originalUrl,
-      error: error.message,
-      ip: req.headers?.['x-forwarded-for'] || req.ip,
-      requestId: req.headers?.['x-request-id'] || null,
-    });
 
+  } catch (error) {
+    logger.error('Error during registration', { message: error.message, service: error.serviceName });
+
+    // Revertir creación del usuario si fue creado
     if (userId) {
-      await deleteUser(userId, req.cookies.token);
+      try {
+        await deleteUser(userId, req.cookies.token);
+        logger.info(`Rolled back user creation for userId: ${userId}`);
+      } catch (rollbackError) {
+        logger.error('Error rolling back user creation', { message: rollbackError.message });
+      }
     }
 
-    // Detectar error del Circuit Breaker por mensaje
+    // Revertir creación del paciente si fue creado
+    if (patientId) {
+      try {
+        await rollbackPatientCreation(patientId);
+        logger.info(`Rolled back patient creation for patientId: ${patientId}`);
+      } catch (rollbackError) {
+        logger.error('Error rolling back patient creation', { message: rollbackError.message });
+      }
+    }
+
     if (error.message === 'Breaker is open') {
-      res.status(503).json({ message: 'Service temporarily unavailable' });
-    } else if (error.message.includes('Error creating user')) {
-      res.status(400).json({ message: error.message });
-    } else if (error.message.includes('Error creating clinic History')) {
-      await rollbackPatientCreation(patientId);
-      res.status(400).json({ message: error.message });
+      res.status(503).json({
+        message: 'Service temporarily unavailable',
+        service: error.serviceName || 'Unknown',
+      });
+    } else if (error.isServiceUnavailable) {
+      res.status(503).json({
+        message: `Service unavailable: ${error.serviceName}`,
+      });
+    } else if (error.isClientError) {
+      res.status(error.status).json({
+        message: `Client error: ${error.message}`,
+        service: error.serviceName || 'Unknown',
+      });
     } else {
       res.status(500).json({ message: 'Internal server error' });
     }
   }
 };
+
 
 const rollbackPatientCreation = async (patientId) => {
   try {
@@ -113,8 +109,7 @@ const rollbackPatientCreation = async (patientId) => {
 };
 
 
-
-const createUser = async ( password, email, token) => {
+export const createUser = async (password, email, token) => {
   try {
     const response = await axios.post(`${AUTH_SVC}/users`,
       {
@@ -132,16 +127,13 @@ const createUser = async ( password, email, token) => {
       }
     );
     return response.data._id;
-  } catch (error) {
-    let errorMessage = 'Error creating user: ';
-    if (error.response) {
-      errorMessage += error.response.data.message;
-    }
-    throw new Error(errorMessage);
+  } catch (error){
+    handleServiceError(error, 'AUTH_SVC');
   }
 };
 
-const createClinicHistory = async (patientId, token) => {
+
+export const createClinicHistory = async (patientId, token) => {
   try {
     const clinicResponse = await axios.post(`${HISTORY_SVC}/histories`, {
       patientId: patientId
@@ -155,14 +147,48 @@ const createClinicHistory = async (patientId, token) => {
     });
     return clinicResponse.data._id;
   } catch (error) {
-    let errorMessage = 'Error creating clinic History: ';
-    if (error.response) {
-      errorMessage += error.response.data.message;
+    handleServiceError(error, 'HISTORY_SVC');
+  }
+};
+
+
+const handleServiceError = (error, serviceName) => {
+  if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+    const timeoutError = new Error(`Timeout error: ${serviceName}`);
+    timeoutError.isServiceUnavailable = true;
+    timeoutError.serviceName = serviceName;
+    throw timeoutError;
+  } else if (error.response) {
+    const status = error.response.status;
+
+    if (status >= 400 && status < 500) {
+      // Errores del cliente (400, 404, etc.)
+      const clientError = new Error(`Client error (${status}): ${serviceName}`);
+      clientError.isClientError = true;
+      clientError.status = status;
+      clientError.serviceName = serviceName;
+      throw clientError;
+    } else if (status >= 500) {
+      // Errores del servidor externo (500, 503, etc.)
+      const serverError = new Error(`Service unavailable: ${serviceName}`);
+      serverError.isServiceUnavailable = true;
+      serverError.serviceName = serviceName;
+      throw serverError;
     }
-    throw new Error(errorMessage);
+  } else if (error.request) {
+    // Error de red (sin respuesta del servidor)
+    const networkError = new Error(`Network error: ${serviceName}`);
+    networkError.isServiceUnavailable = true;
+    networkError.serviceName = serviceName;
+    throw networkError;
   }
 
-}
+  // Otros errores no relacionados con la disponibilidad del servicio
+  const unexpectedError = new Error(`Unexpected error in ${serviceName}: ${error.message}`);
+  unexpectedError.serviceName = serviceName;
+  throw unexpectedError;
+};
+
 
 const checkAvailableDNI = async (dni) => {
   const response = await Patient.find({ dni: dni });
