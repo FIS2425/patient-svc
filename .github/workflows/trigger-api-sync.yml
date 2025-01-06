@@ -1,0 +1,23 @@
+name: Trigger API Gateway Sync
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'openapi.yaml'
+
+jobs:
+  notify-gateway:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Trigger API Gateway Sync 🚀
+        uses: convictional/trigger-workflow-and-wait@v1.6.5
+        with:
+          owner: FIS2425
+          repo: api-gateway
+          github_token: ${{ secrets.DISPATCH_TOKEN }}
+          workflow_file_name: sync-openapi.yml
+          ref: ${{ github.ref_name }}
