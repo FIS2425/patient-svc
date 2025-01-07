@@ -38,14 +38,18 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: 'DNI already exists' });
     }
 
-    // Crear usuario en AUTH_SVC
-    userId = await createUserWithCircuitBreaker.fire(password, email, req.cookies.token);
-    
+    userId ='Prueba';
     // Crear paciente en la base de datos local
     const patient = new Patient({ name, surname, birthdate, dni, city, userId });
     const newPatient = await patient.save();
     patientId = newPatient._id;
 
+    // Crear usuario en AUTH_SVC
+    userId = await createUserWithCircuitBreaker.fire(password, email,patientId, req.cookies.token);
+
+    //actualizar el paciente con el userId
+    await Patient.findByIdAndUpdate(patientId, { userId: userId });
+    
     // Crear historial clínico en HISTORY_SVC
     await createClinicHistoryWithCircuitBreaker.fire(newPatient._id, req.cookies.token);
 
@@ -109,13 +113,14 @@ const rollbackPatientCreation = async (patientId) => {
 };
 
 
-export const createUser = async (password, email, token) => {
+export const createUser = async (password, email,patientId, token) => {
   try {
     const response = await axios.post(`${AUTH_SVC}/users`,
       {
         password,
         email,
         roles: ['patient'],
+        patientid: patientId,
       },
       {
         withCredentials: true, // Ensures cookies are sent along
