@@ -38,7 +38,7 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: 'DNI already exists' });
     }
 
-    userId ='Prueba';
+    userId =' ';
     // Crear paciente en la base de datos local
     const patient = new Patient({ name, surname, birthdate, dni, city, userId });
     const newPatient = await patient.save();
