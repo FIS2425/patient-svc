@@ -12,6 +12,7 @@ const circuitOptions = {
   timeout: 5000, 
   errorThresholdPercentage: 30, 
   resetTimeout: 30000,
+
 };
 
 export const register = async (req, res) => {
@@ -36,6 +37,7 @@ export const register = async (req, res) => {
         ip: req.headers && req.headers['x-forwarded-for'] || req.ip,
         requestId: req.headers && req.headers['x-request-id'] || null,
       });
+
       return res.status(400).json({ message: 'Missing fields' });
     }
 
@@ -47,6 +49,7 @@ export const register = async (req, res) => {
         ip: req.headers && req.headers['x-forwarded-for'] || req.ip,
         requestId: req.headers && req.headers['x-request-id'] || null,
       });
+
       return res.status(400).json({ message: 'DNI already exists' });
     }
     patientId = uuidv4();
@@ -111,6 +114,7 @@ export const register = async (req, res) => {
           ip: req.headers && req.headers['x-forwarded-for'] || req.ip,
           requestId: req.headers && req.headers['x-request-id'] || null,
         });
+
       }
     }
 
@@ -149,6 +153,7 @@ const rollbackPatientCreation = async (patientId) => {
 
 
 const createUser = async (password, email, patientId, token) => {
+
   try {
     const response = await axios.post(`${AUTH_SVC}/users`,
       {
@@ -174,6 +179,7 @@ const createUser = async (password, email, patientId, token) => {
 
 
 const createClinicHistory = async (patientId, token) => {
+
   try {
     const clinicResponse = await axios.post(`${HISTORY_SVC}/histories`, {
       patientId: patientId
