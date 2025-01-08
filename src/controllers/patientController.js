@@ -137,7 +137,7 @@ export const register = async (req, res) => {
     }
   }
 };
-
+}
 
 const rollbackPatientCreation = async (patientId) => {
   try {
