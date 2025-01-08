@@ -2,14 +2,17 @@ import Patient from '../schemas/Patient.js';
 import logger from '../config/logger.js';
 import axios from 'axios';
 import CircuitBreaker from 'opossum';
+import { v4 as uuidv4 } from 'uuid';
+
 
 const AUTH_SVC = process.env.AUTH_SVC || 'http://localhost:3001/api/v1';
 const HISTORY_SVC = process.env.HISTORY_SVC || 'http://localhost:3005/api/v1';
 
 const circuitOptions = {
   timeout: 5000, 
-  errorThresholdPercentage: 50, 
-  resetTimeout: 10000,
+  errorThresholdPercentage: 30, 
+  resetTimeout: 30000,
+
 };
 
 export const register = async (req, res) => {
@@ -28,50 +31,90 @@ export const register = async (req, res) => {
     const { name, surname, birthdate, dni, city, password, email } = req.body;
 
     if (!name || !surname || !birthdate || !dni || !city || !password || !email) {
-      logger.error('Missing fields', { method: req.method, url: req.originalUrl });
+      logger.error('Missing fields', {
+        method: req.method,
+        url: req.originalUrl,
+        ip: req.headers && req.headers['x-forwarded-for'] || req.ip,
+        requestId: req.headers && req.headers['x-request-id'] || null,
+      });
+
       return res.status(400).json({ message: 'Missing fields' });
     }
 
     const availableDNI = await checkAvailableDNI(dni);
     if (availableDNI) {
-      logger.error('DNI already exists', { method: req.method, url: req.originalUrl });
+      logger.error('DNI already exists', {
+        method: req.method,
+        url: req.originalUrl,
+        ip: req.headers && req.headers['x-forwarded-for'] || req.ip,
+        requestId: req.headers && req.headers['x-request-id'] || null,
+      });
+
       return res.status(400).json({ message: 'DNI already exists' });
     }
-
-    // Crear usuario en AUTH_SVC
-    userId = await createUserWithCircuitBreaker.fire(password, email, req.cookies.token);
+    patientId = uuidv4();
+    userId = await createUserWithCircuitBreaker.fire(password, email, patientId, req.cookies.token);
     
-    // Crear paciente en la base de datos local
-    const patient = new Patient({ name, surname, birthdate, dni, city, userId });
-    const newPatient = await patient.save();
-    patientId = newPatient._id;
+    if (userId) {
+      const patient = new Patient({ _id: patientId, name, surname, birthdate, dni, city, userId });
+      const newPatient = await patient.save();
 
-    // Crear historial clínico en HISTORY_SVC
-    await createClinicHistoryWithCircuitBreaker.fire(newPatient._id, req.cookies.token);
+      await createClinicHistoryWithCircuitBreaker.fire(newPatient._id, req.cookies.token);
 
-    logger.info(`Patient ${newPatient._id} created successfully`);
-    res.status(201).json(newPatient);
-
+      logger.info('Patient created successfully', {
+        method: req.method,
+        url: req.originalUrl,
+        ip: req.headers && req.headers['x-forwarded-for'] || req.ip,
+        requestId: req.headers && req.headers['x-request-id'] || null,
+        patientId: newPatient._id,
+      }); 
+      res.status(201).json(newPatient);
+    } 
+    
   } catch (error) {
-    logger.error('Error during registration', { message: error.message, service: error.serviceName });
+    logger.error('Error creating patient', {
+      method: req.method,
+      url: req.originalUrl,
+      error: error.message,
+      ip: req.headers && req.headers['x-forwarded-for'] || req.ip,
+      requestId: req.headers && req.headers['x-request-id'] || null,
+    });
 
-    // Revertir creación del usuario si fue creado
     if (userId) {
       try {
         await deleteUser(userId, req.cookies.token);
-        logger.info(`Rolled back user creation for userId: ${userId}`);
+        logger.info(`Rolled back user creation for userId: ${userId}`, {
+          method: req.method,
+          url: req.originalUrl,
+          ip: req.headers && req.headers['x-forwarded-for'] || req.ip,
+          requestId: req.headers && req.headers['x-request-id'] || null,
+        });
       } catch (rollbackError) {
-        logger.error('Error rolling back user creation', { message: rollbackError.message });
-      }
+        logger.error('Error rolling back user creation', { message: rollbackError.message,
+          method: req.method,
+          url: req.originalUrl,
+          ip: req.headers && req.headers['x-forwarded-for'] || req.ip,
+          requestId: req.headers && req.headers['x-request-id'] || null,
+        });
     }
 
-    // Revertir creación del paciente si fue creado
     if (patientId) {
       try {
         await rollbackPatientCreation(patientId);
-        logger.info(`Rolled back patient creation for patientId: ${patientId}`);
+        logger.info(`Rolled back patient creation for patientId: ${patientId}`, {
+          method: req.method,
+          url: req.originalUrl,
+          ip: req.headers && req.headers['x-forwarded-for'] || req.ip,
+          requestId: req.headers && req.headers['x-request-id'] || null,
+        });
       } catch (rollbackError) {
-        logger.error('Error rolling back patient creation', { message: rollbackError.message });
+        logger.error('Error rolling back patient creation', { message: rollbackError.message,
+          method: req.method,
+          url: req.originalUrl,
+          ip: req.headers && req.headers['x-forwarded-for'] || req.ip,
+          requestId: req.headers && req.headers['x-request-id'] || null,
+        });
+
       }
     }
 
@@ -109,13 +152,15 @@ const rollbackPatientCreation = async (patientId) => {
 };
 
 
-export const createUser = async (password, email, token) => {
+const createUser = async (password, email, patientId, token) => {
+
   try {
     const response = await axios.post(`${AUTH_SVC}/users`,
       {
         password,
         email,
         roles: ['patient'],
+        patientid: patientId,
       },
       {
         withCredentials: true, // Ensures cookies are sent along
@@ -133,7 +178,8 @@ export const createUser = async (password, email, token) => {
 };
 
 
-export const createClinicHistory = async (patientId, token) => {
+const createClinicHistory = async (patientId, token) => {
+
   try {
     const clinicResponse = await axios.post(`${HISTORY_SVC}/histories`, {
       patientId: patientId
